@@ -9,8 +9,8 @@ module.exports = async (client) => {
 
     const rest = new REST({ version: '10' }).setToken(client.config.token)
     try {
-        await rest.put(Routes.applicationCommands(client.config.botId), { body: commands })
-        console.log(`[✅] » [Slashcommands] Successfully registered ${commands.length} commands.`)
+        await rest.put(Routes.applicationCommands(client.config.clientId), { body: commands })
+        console.log(`(${process.pid}) [✅] » [Slashcommands] Successfully registered ${commands.length} commands.`)
     } catch (error) {
         console.error('Error updating application commands:', error)
         return

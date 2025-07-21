@@ -48,7 +48,7 @@ module.exports = {
                     }
 
                     await buttonHandler.execute(interaction, client);
-                } else if (interaction.isStringSelectMenu()) {
+                } else if (interaction.isAnySelectMenu()) {
                     const selectsHandler = client.selects?.find(handler => interaction.customId.startsWith(handler.customId));
 
                     if (!selectsHandler) {

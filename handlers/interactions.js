@@ -31,7 +31,7 @@ module.exports = (client) => {
             }
 
             type.collection.set(interactionModule.customId, interactionModule);
-            console.log(`[✅] » [INTER] ${interactionModule.customId} chargé depuis ${path.relative(process.cwd(), filepath)}`);
+            console.log(`(${process.pid}) [✅] » [INTER] ${interactionModule.customId} chargé depuis ${path.relative(process.cwd(), filepath)}`);
         }
     }
 };

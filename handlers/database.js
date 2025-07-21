@@ -14,17 +14,30 @@ module.exports = (client) => {
     return new Promise((resolve, reject) => {
         const db = new Database(dbPath, (err) => {
             if (err) {
-                client.error('Erreur lors de la connexion à la base de données :', err.message);
+                console.error(`(${process.pid}) [❌] » [Database] Erreur lors de la connexion à la base de données :`, err.message);
                 reject(err);
             } else {
-                client.data('Connecté à la base de données SQLite');
+                console.log(`(${process.pid}) [✅] » [Database] Connecté à la base de données SQLite`);
+
+                db.run(`CREATE TABLE IF NOT EXISTS owners (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    username TEXT NOT NULL,
+                    added_by TEXT NOT NULL,
+                    added_at datetime DEFAULT CURRENT_TIMESTAMP
+                )`, (err) => {
+                    if (err) {
+                        console.error(`(${process.pid}) [❌] » [Database] Erreur lors de la création de la table owners :`, err.message);
+                    } else {
+                        console.log(`(${process.pid}) [✅] » [Database] Table owners créée ou déjà existante.`);
+                    }
+                });
 
                 db.on('close', () => {
-                    client.info('Connexion à la base de données fermée.');
+                    console.log(`(${process.pid}) [✅] » [Database]Connexion à la base de données fermée.`);
                 });
 
                 if (client) {
-                    client.database = db;
+                    client.db = db;
                 }
                 
                 resolve(db);

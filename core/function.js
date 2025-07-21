@@ -1,8 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { readdirSync, statSync } = require("fs");
 const path = require("path");
-const { createCanvas } = require('canvas');
-const { default: axios } = require("axios");
 
 /**
  * 
@@ -135,6 +133,18 @@ function buildCommand(command) {
     return slashCommand.toJSON();
 }
 
+function isOwner(client, userId) {
+    return new Promise((resolve, reject) => {
+        if (client.config.devId.includes(userId)) return resolve(true);
+
+        client.db.get(`SELECT id FROM owners WHERE id = ?`, [userId], (err, row) => {
+            if (err) return reject(err);
+            resolve(!!row);
+        });
+    });
+}
+
+
 /**
  * @param {String} dir
  * @param {Object} client
@@ -152,12 +162,12 @@ function loadCommand (dir, client) {
             const command = require(fullPath)
 
             if (!command.name) {
-                console.error(`[❌] » [Commands] Command ${fullPath} does not have a name property, Skipping...`)
+                console.error(`(${process.pid}) [❌] » [Commands] Command ${fullPath} does not have a name property, Skipping...`)
                 continue
             }
 
             client.commands.set(command.name, command)
-            console.log(`[✅] » [Commands] Loaded command ${command.name} from ${file}`)
+            console.log(`(${process.pid}) [✅] » [Commands] Loaded command ${command.name} from ${file}`)
         }
     }
 }
@@ -171,23 +181,23 @@ function loadEvent(dir, client) {
 
         if (stat.isDirectory()) {
             loadEvent(fullPath, client)
-        } else if (file.endsWith(".js")) {
-            const event = require(fullPath)
+            continue
+        } 
 
-            if (!event.name) {
-                console.error(`[❌] » [Events] Event ${fullPath} does not have a name property, Skipping...`)
-                continue
-            }
+        if (!file.endsWith(".js")) continue
 
-            if (event.once) {
-                client.once(event.name, (...args) => event.execute(...args, client))
-            } else {
-                client.on(event.name, (...args) => event.execute(...args, client))
-            }
+        const event = require(fullPath);
 
-            client.events.set(event.name, event)
-            console.log(`[✅] » [Events] Loaded event ${event.name} from ${file}`)
+        if (!event.name || typeof event.execute !== "function") {
+            console.warn(`(${process.pid}) [⚠️] » [Events] ${file} est incomplet (name ou execute manquant).`);
+            continue;
         }
+
+        const listener = (...args) => event.execute(...args, client);
+        event.once ? client.once(event.name, listener) : client.on(event.name, listener);
+
+        client.events.set(event.name, event);
+        console.log(`(${process.pid}) [✅] » [Events] Chargé: ${event.name} (${path.relative(process.cwd(), fullPath)})`);
     }
 }
 
@@ -195,8 +205,7 @@ function loadEvent(dir, client) {
 
 module.exports = {
     buildCommand,
-    checkBotExpiration,
-    checkToken,
+    isOwner,
     loadCommand,
     loadEvent
 };
